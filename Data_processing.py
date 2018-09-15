@@ -36,8 +36,52 @@ if __name__ == "__main__":
         add_doc_sql = "Insert into earningcall (company,year,quarter,date) VALUES (%s,%s,%s,%s)"
         cursor.execute(add_doc_sql, (company, year,quarter,date))
         mydb.commit()
+        earning_call_id = cursor.lastrowid
         doc = Earning_calls_PDF_reader.ProcessDocuments(dirpath+"/"+files)
-        # for pres in doc.presentations:
-        #     print(pres[0])
-        #     print(pres[1])
-        #     print(pres[2])
+        for pres in doc.presentations:
+            add_presentation = "Insert into presentations(EarningCall_idtable1,Presenter,Position,Presentation) Values (%s,%s,%s,%s)"
+            cursor.execute(add_presentation,(earning_call_id,pres[0],pres[1],pres[2]))
+            mydb.commit()
+        analysts = []
+        executives = []
+        question = True
+        answer = False
+        follow_up = False
+        for question_block in doc.questions_answers:
+            if question and question_block[0]=="Operator":
+                continue
+            if question:
+                analysts.append(question_block[0])
+                sql_add_question = "Insert into questions (Analyst,Analyst_affiliation,Question,isFollowUp,idQuestionToWhichItFollows,EarningCall_idtable1,hasFollowUps)" \
+                                   "Values (%s,%s,%s,%s,%s,%s,%s)"
+                cursor.execute(sql_add_question,(question_block[0],question_block[1],question_block[2],0,-1,earning_call_id,0))
+                mydb.commit()
+                question_id = cursor.lastrowid
+                question = False
+                answer = True
+                continue
+            if answer:
+                if question_block[0] in analysts:
+                    # this is follow up question
+                    sql_add_question = "Insert into questions (Analyst,Analyst_affiliation,Question,isFollowUp,idQuestionToWhichItFollows,EarningCall_idtable1,hasFollowUps)" \
+                                       "Values (%s,%s,%s,%s,%s,%s,%s)"
+                    cursor.execute(sql_add_question,
+                                   (question_block[0], question_block[1], question_block[2], 1, question_id, earning_call_id, 0))
+                    mydb.commit()
+                    follow_up_question_id = cursor.lastrowid
+                    update_question = "Update questions set hasFollowUps=1 where idQuestions="+str(question_id)
+                    cursor.execute(update_question)
+                    mydb.commit()
+                    question_id = follow_up_question_id
+                    question = False
+                    answer = True
+                elif question_block[0] == "Operator":
+                    answer = False
+                    question = True
+                    continue
+                else:
+                    sql_add_answer = "Insert into answer (Questions_idQuestions,Answerer,AnswerrerAffiliation,Answer)" \
+                                     "Values (%s,%s,%s,%s)"
+                    cursor.execute(sql_add_answer,(question_id,question_block[0],question_block[1],question_block[2]))
+                    mydb.commit()
+
