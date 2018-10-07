@@ -30,15 +30,22 @@ if __name__ == "__main__":
         quarter = q_data[1]
         year = q_data[2]
         if mixedup:
-            date = sp[3]
+            date = sp[3].replace('.pdf','')
         else:
-            date = sp[2]
-        add_doc_sql = "Insert into earningcall (company,year,quarter,date) VALUES (%s,%s,%s,%s)"
-        cursor.execute(add_doc_sql, (company, year,quarter,date))
+            date = sp[2].replace('.pdf','')
+
+        doc = Earning_calls_PDF_reader.ProcessDocuments(dirpath+"/"+files)
+        ticker = doc.ticker
+        stock_exchange = doc.stock_exchange
+        add_doc_sql = "Insert into earningcall (company,year,quarter,date,ticker,stockexchange) VALUES (%s,%s,%s,%s,%s,%s)"
+        cursor.execute(add_doc_sql, (company, year, quarter, date,ticker,stock_exchange))
         mydb.commit()
         earning_call_id = cursor.lastrowid
-        doc = Earning_calls_PDF_reader.ProcessDocuments(dirpath+"/"+files)
         for pres in doc.presentations:
+            if pres[0] == "Related":
+                continue
+            if pres[0] == "spglobal.com/marketintelligence":
+                continue
             add_presentation = "Insert into presentations(EarningCall_idtable1,Presenter,Position,Presentation) Values (%s,%s,%s,%s)"
             cursor.execute(add_presentation,(earning_call_id,pres[0],pres[1],pres[2]))
             mydb.commit()
@@ -49,6 +56,8 @@ if __name__ == "__main__":
         follow_up = False
         for question_block in doc.questions_answers:
             if question and question_block[0]=="Operator":
+                continue
+            if question_block[0] == "spglobal.com/marketintelligence":
                 continue
             if question:
                 analysts.append(question_block[0])
@@ -80,7 +89,7 @@ if __name__ == "__main__":
                     question = True
                     continue
                 else:
-                    sql_add_answer = "Insert into answer (Questions_idQuestions,Answerer,AnswerrerAffiliation,Answer)" \
+                    sql_add_answer = "Insert into answer (Questions_idQuestions,Answerer,AnswererAffiliation,Answer)" \
                                      "Values (%s,%s,%s,%s)"
                     cursor.execute(sql_add_answer,(question_id,question_block[0],question_block[1],question_block[2]))
                     mydb.commit()

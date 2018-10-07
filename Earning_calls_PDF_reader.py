@@ -21,6 +21,8 @@ def createPDFDoc(fpath):
 
 class DocumentContent():
     def __init__(self):
+        self.ticker = ''
+        self.stock_exchange = ''
         self.presentations = []
         self.questions_answers = []
 
@@ -62,10 +64,10 @@ def ProcessDocuments(doc_path):
     q_block_speaker = ""
     q_block_role = ""
     q_block_text = ""
-    follow_up = False
-    is_question_asker = False
     speaker_role = ''
     speaker = ''
+    stock_exchange = ''
+    ticker = ''
     operator_q = False
     while np:
         interpreter.process_page(np)
@@ -84,6 +86,17 @@ def ProcessDocuments(doc_path):
                             for c in  o._objs:
                                 if isinstance(c, pdfminer.layout.LTChar) and firstChat:
                                     print("fontname %s %s"%(c.fontname,c.size))
+                                    if c.size>31:
+                                        try:
+                                            tokens = text.split(' ')
+                                            token_len = len(tokens)
+                                            last = tokens[token_len-1]
+                                            gr = last.split(':')
+                                            stock_exchange = gr[0]
+                                            ticker = gr[1]
+                                        except:
+                                            stock_exchange = ''
+                                            ticker = ''
                                     firstChat = False
                                     if questions:
                                         if c.size<10:
@@ -97,7 +110,6 @@ def ProcessDocuments(doc_path):
                                         elif 'Bold' in c.fontname:
                                             if q_block_text!="":
                                                 dc.questions_answers.append((q_block_speaker.replace('\n',''),q_block_role.replace('\n',''),q_block_text))
-                                                q_block_speaker = ""
                                                 q_block_role = ""
                                                 q_block_text = ""
                                             q_block_speaker = text
@@ -143,6 +155,8 @@ def ProcessDocuments(doc_path):
             np = pages.next()
         except:
             np = False
+    dc.stock_exchange = stock_exchange
+    dc.ticker = ticker
     return dc
 
 
