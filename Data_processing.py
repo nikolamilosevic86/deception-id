@@ -19,20 +19,26 @@ if __name__ == "__main__":
     cursor = mydb.cursor()
 
     onlyfiles = [f for f in listdir(dirpath) if isfile(join(dirpath, f))]
+    error_files_name = 0
     for files in onlyfiles:
         mixedup = False
+        print(files)
         sp = files.split(',')
         company = sp[0]
-        q_data = sp[1].split(' ')
-        if "Inc." in q_data:
-            q_data = sp[2].split(' ')
-            mixedup = True
-        quarter = q_data[1]
-        year = q_data[2]
-        if mixedup:
-            date = sp[3].replace('.pdf','')
-        else:
-            date = sp[2].replace('.pdf','')
+        try:
+            q_data = sp[1].split(' ')
+            if "Inc." in q_data:
+                q_data = sp[2].split(' ')
+                mixedup = True
+            quarter = q_data[1]
+            year = q_data[2]
+            if mixedup:
+                date = sp[3].replace('.pdf','')
+            else:
+                date = sp[2].replace('.pdf','')
+        except:
+            print("Error")
+            error_files_name = error_files_name + 1
 
         doc = Earning_calls_PDF_reader.ProcessDocuments(dirpath+"/"+files)
         ticker = doc.ticker
@@ -93,4 +99,5 @@ if __name__ == "__main__":
                                      "Values (%s,%s,%s,%s)"
                     cursor.execute(sql_add_answer,(question_id,question_block[0],question_block[1],question_block[2]))
                     mydb.commit()
+    print("Error processing file name: "+str(error_files_name))
 
