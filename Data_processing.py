@@ -74,10 +74,16 @@ if __name__ == "__main__":
             if is_analyst:
                 if prev_analyst==question_block[0]:
                     analysts.append(question_block[0])
+                    analyst_name = question_block[0]
+                    analyst_role = question_block[1]
+                    if analyst_role =='':
+                        for ana in doc.analysts:
+                            if ana['Name']==question_block[0]:
+                                analyst_role = ana['Role']
                     sql_add_question = "Insert into questions (Analyst,Analyst_affiliation,Question,isFollowUp,idQuestionToWhichItFollows,EarningCall_idtable1,hasFollowUps)" \
                                        "Values (%s,%s,%s,%s,%s,%s,%s)"
                     cursor.execute(sql_add_question,
-                                   (question_block[0], question_block[1], question_block[2], 0, question_id, earning_call_id, 0))
+                                   (analyst_name, analyst_role, question_block[2], 0, question_id, earning_call_id, 0))
                     mydb.commit()
                     prev_analyst = question_block[0]
                     was_analyst = True
@@ -90,9 +96,15 @@ if __name__ == "__main__":
                     continue
                 else:
                     analysts.append(question_block[0])
+                    analyst_name = question_block[0]
+                    analyst_role = question_block[1]
+                    if analyst_role == '':
+                        for ana in doc.analysts:
+                            if ana['Name'] == question_block[0]:
+                                analyst_role = ana['Role']
                     sql_add_question = "Insert into questions (Analyst,Analyst_affiliation,Question,isFollowUp,idQuestionToWhichItFollows,EarningCall_idtable1,hasFollowUps)" \
                                        "Values (%s,%s,%s,%s,%s,%s,%s)"
-                    cursor.execute(sql_add_question,(question_block[0],question_block[1],question_block[2],0,-1,earning_call_id,0))
+                    cursor.execute(sql_add_question,(analyst_name,analyst_role,question_block[2],0,-1,earning_call_id,0))
                     mydb.commit()
                     question_id = cursor.lastrowid
                     prev_analyst = question_block[0]
