@@ -1,14 +1,43 @@
 import time
 import webbrowser
 import selenium.webdriver as webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from credentials import *
 
-
+from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import TimeoutException
+import csv
 dr = webdriver.Chrome()
 dr.get('https://www.capitaliq.com/CIQDotNet/my/dashboard.aspx?favorite=true')
+myElem = WebDriverWait(dr, 10).until(EC.presence_of_element_located((By.ID, 'username')))
+print("Page is ready!")
+dr.find_element_by_name("username").send_keys(username);
+passw = dr.find_element_by_name("password")
+passw.send_keys(password)
+passw.send_keys(Keys.RETURN)
+time.sleep(5)
+with open('Earningscalls_USexchanges_all.csv') as csv_file:
+    csv_reader = csv.reader(csv_file, delimiter=',')
+    line_count = 0
+    for row in csv_reader:
+        if line_count != 0:
+            num = row[1][4:]
+            dr.get('https://www.capitaliq.com/CIQDotNet/Transcripts/Report.axd?keyDevId=' + str(
+                num) + '&format=PDF&activityTypeId=9518&myContentType=6&myDocumentType=9')
+            time.sleep(1)
+
+        line_count = line_count + 1
+
+
+
+
+
 #
 # dr.get('http://stackoverflow.com/')
 # dr.execute_script("$(window.open('https://www.capitaliq.com/CIQDotNet/Transcripts/Report.axd?keyDevId=583758909&format=PDF&activityTypeId=9518&myContentType=6&myDocumentType=9'))")
-dr.execute_script("$(window.open('https://www.capitaliq.com/CIQDotNet/Transcripts/Report.axd?keyDevId=583758910&format=PDF&activityTypeId=9518&myContentType=6&myDocumentType=9'))")
+#dr.execute_script("$(window.open('https://www.capitaliq.com/CIQDotNet/Transcripts/Report.axd?keyDevId=2505751&format=PDF&activityTypeId=9518&myContentType=6&myDocumentType=9'))")
 # initial_num = 583758909
 # max_num = 100
 # i = initial_num
